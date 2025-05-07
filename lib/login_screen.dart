@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:location_app/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -11,19 +13,28 @@ class _LoginScreenState extends State<LoginScreen> {
   // Contrôleurs pour les champs
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  
+  get _login => null;
 
   // Action quand on clique sur "Se connecter"
-  void _login() {
-    if (_formKey.currentState!.validate()) {
-      String email = emailController.text.trim();
-      String password = passwordController.text;
-
-      print("Email : $email");
-      print("Mot de passe : $password");
-
-      // Plus tard : appel à Firebase Auth
+  void login(String email, String password) async {
+  try {
+    UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    print('Utilisateur connecté : ${userCredential.user?.uid}');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+  } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur de connexion : $e")),
+      );
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +66,16 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(height: 32),
 
               ElevatedButton(
-                onPressed: _login,
-                child: Text("Se connecter"),
-                style: ElevatedButton.styleFrom(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                  login(emailController.text.trim(), passwordController.text.trim());
+                  }
+                  },
+                  style: ElevatedButton.styleFrom(
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
                   backgroundColor: Colors.blue,
                 ),
+                child: Text("Se connecter"),
               ),
             ],
           ),

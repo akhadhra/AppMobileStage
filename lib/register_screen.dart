@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:location_app/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -14,24 +16,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController passwordController = TextEditingController();
 
   // Action quand on clique sur le bouton "S'inscrire"
-  void _register() {
+  Future<void> _register() async {
     if (_formKey.currentState!.validate()) {
       String name = nameController.text.trim();
       String email = emailController.text.trim();
       String password = passwordController.text;
-
+      
       print("Nom : $name");
       print("Email : $email");
       print("Mot de passe : $password");
 
-      // Ici, plus tard, tu appelleras Firebase
+       try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: password);
+
+      print("Utilisateur créé : ${userCredential.user?.uid}");
+
+      // Redirection vers l'accueil
+      Navigator.pushReplacementNamed(context, '/home');
+    } catch (e) {
+      print("Erreur d'inscription : $e");
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur : ${e.toString()}")),
+      );
+    }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Créer un compte")),
+      appBar: AppBar(title: Text("S'inscrire")),
       body: Padding(
         padding: EdgeInsets.all(24.0),
         child: Form(
