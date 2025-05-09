@@ -61,4 +61,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'locayalla-81b62.firebasestorage.app',
     measurementId: 'G-27QEX4ZTPH',
   );
+
 }
