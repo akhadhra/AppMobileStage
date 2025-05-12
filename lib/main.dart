@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:location_app/auth_gate.dart';
 import 'package:location_app/home_screen.dart';
 import 'firebase_options.dart';
 import 'login_screen.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
         // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: WelcomeScreen(),
+      home: AuthGate(),
       routes: {
         '/register': (context) => RegisterScreen(),
         '/login': (context) => LoginScreen(),

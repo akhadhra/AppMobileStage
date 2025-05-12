@@ -30,6 +30,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
 
+          // On met à jour le nom de l’utilisateur dans Firebase
+          await userCredential.user!.updateDisplayName(name);
+          await userCredential.user!.reload();
+
       print("Utilisateur créé : ${userCredential.user?.uid}");
 
       // Redirection vers l'accueil

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'add_annonce_screen.dart';
 import 'welcome_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,23 +19,57 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Accueil"),
+        title: Text("Bonjour - ${user?.displayName ?? " et bienvenue"}"),
         actions: [
           IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AjouterAnnonceScreen()),
+              );
+            },
+            icon: Icon(Icons.add),
+            tooltip: "Ajouter une annonce",
+          ),
+          IconButton(
             onPressed: () => _signOut(context),
-            icon: const Icon(Icons.logout),
-            tooltip: 'Déconnexion',
+            icon: Icon(Icons.logout),
+            tooltip: "Déconnexion",
           ),
         ],
       ),
-      body: Center(
-        child: Text(
-          "Bienvenue, ${user?.email ?? "Utilisateur"} !",
-          style: const TextStyle(fontSize: 20),
-        ),
-      ),
+      body: StreamBuilder<QuerySnapshot>(
+  stream: FirebaseFirestore.instance
+      .collection('annonces')
+      .orderBy('timestamp', descending: true)
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
+
+    final annonces = snapshot.data!.docs;
+
+    if (annonces.isEmpty) {
+      return Center(child: Text("Aucune annonce pour l’instant"));
+    }
+
+    return ListView.builder(
+      itemCount: annonces.length,
+      itemBuilder: (context, index) {
+        final data = annonces[index].data() as Map<String, dynamic>;
+        return ListTile(
+          title: Text(data['titre'] ?? ''),
+          subtitle: Text(data['description'] ?? ''),
+          trailing: Text(data['auteur'] ?? ''),
+        );
+      },
+    );
+  },
+),
     );
   }
 }
