@@ -25,38 +25,50 @@ class _AjouterAnnonceScreenState extends State<AjouterAnnonceScreen> {
 
   Future<void> _pickImages() async {
     final pickedFiles = await picker.pickMultiImage();
-    if (pickedFiles != null && pickedFiles.isNotEmpty) {
-      setState(() {
-        _imageFiles = pickedFiles;
+    if (pickedFiles.isNotEmpty) {
+    setState(() {
+      _imageFiles = pickedFiles;
       });
     }
   }
 
   Future<List<String>> _uploadImages(List<XFile> files) async {
-    List<String> downloadUrls = [];
+  List<String> downloadUrls = [];
+
+  for (var file in files) {
     try {
-      for (var file in files) {
-        final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-        final ref = FirebaseStorage.instance.ref().child('annonces/$fileName.jpg');
-        final fileToUpload = File(file.path);
-        await ref.putFile(fileToUpload);
-        final url = await ref.getDownloadURL();
-        downloadUrls.add(url);
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final ref = FirebaseStorage.instance.ref().child('annonces/$fileName.jpg');
+
+      if (kIsWeb) {
+        final bytes = await file.readAsBytes();
+        await ref.putData(bytes); // Pour le Web
+      } else {
+        await ref.putFile(File(file.path)); // Pour mobile
       }
+
+      final url = await ref.getDownloadURL();
+      print("✅ Image uploadée : $url");
+      downloadUrls.add(url);
     } catch (e) {
-      print("Erreur d'upload d'image : $e");
+      print("❌ Erreur d'upload d'image : $e");
     }
-    return downloadUrls;
   }
 
+  return downloadUrls;
+}
+
+
   void _publierAnnonce() async {
+   
     if (_formKey.currentState!.validate() && _imageFiles != null && _imageFiles!.isNotEmpty) {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
 
       final imageUrls = await _uploadImages(_imageFiles!);
       if (imageUrls.isEmpty) return;
-
+      // Enregistrement de l'annonce dans Firestore
+      print("Début de la publication...");
       await FirebaseFirestore.instance.collection('annonces').add({
         'titre': _titreController.text.trim(),
         'description': _descriptionController.text.trim(),

@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'add_annonce_screen.dart';
 import 'welcome_screen.dart';
+import 'annonce_detail_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -41,34 +42,70 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-  stream: FirebaseFirestore.instance
-      .collection('annonces')
-      .orderBy('timestamp', descending: true)
-      .snapshots(),
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
+      body: Padding(
+  padding: const EdgeInsets.all(12.0),
+  child: StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance.collection('annonces').orderBy('timestamp', descending: true).snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      }
+      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        return Center(child: Text("Aucune annonce disponible."));
+      }
 
-    final annonces = snapshot.data!.docs;
+      final annonces = snapshot.data!.docs;
 
-    if (annonces.isEmpty) {
-      return Center(child: Text("Aucune annonce pour l’instant"));
-    }
+      return GridView.builder(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.8,
+        ),
+        itemCount: annonces.length,
+        itemBuilder: (context, index) {
+          final data = annonces[index];
+          final List images = data['images'] ?? [];
+          final titre = data['titre'] ?? '';
 
-    return ListView.builder(
-      itemCount: annonces.length,
-      itemBuilder: (context, index) {
-        final data = annonces[index].data() as Map<String, dynamic>;
-        return ListTile(
-          title: Text(data['titre'] ?? ''),
-          subtitle: Text(data['description'] ?? ''),
-          trailing: Text(data['auteur'] ?? ''),
-        );
-      },
-    );
-  },
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AnnonceDetailScreen(annonce: data.data() as Map<String, dynamic>)),
+              );
+            },
+            child: Card(
+              elevation: 4,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 6,
+                    child: images.isNotEmpty
+                        ? Image.network(images[0], fit: BoxFit.cover)
+                        : Container(color: Colors.grey),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        titre,
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+    },
+  ),
 ),
     );
   }
