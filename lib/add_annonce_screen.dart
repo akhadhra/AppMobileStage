@@ -48,10 +48,10 @@ class _AjouterAnnonceScreenState extends State<AjouterAnnonceScreen> {
       }
 
       final url = await ref.getDownloadURL();
-      print("✅ Image uploadée : $url");
+      print("Image uploadée : $url");
       downloadUrls.add(url);
     } catch (e) {
-      print("❌ Erreur d'upload d'image : $e");
+      print("Erreur d'upload d'image : $e");
     }
   }
 
@@ -59,32 +59,42 @@ class _AjouterAnnonceScreenState extends State<AjouterAnnonceScreen> {
 }
 
 
-  void _publierAnnonce() async {
-   
-    if (_formKey.currentState!.validate() && _imageFiles != null && _imageFiles!.isNotEmpty) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+  void publierAnnonce() async {
+  print(">>> Bouton Publier cliqué");
 
-      final imageUrls = await _uploadImages(_imageFiles!);
-      if (imageUrls.isEmpty) return;
-      // Enregistrement de l'annonce dans Firestore
-      print("Début de la publication...");
-      await FirebaseFirestore.instance.collection('annonces').add({
-        'titre': _titreController.text.trim(),
-        'description': _descriptionController.text.trim(),
-        'prix': _prixController.text.trim(),
-        'images': imageUrls,
-        'auteur': user.displayName ?? user.email,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      Navigator.pop(context);
-    } else if (_imageFiles == null || _imageFiles!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Veuillez sélectionner au moins une image")),
-      );
-    }
+  if (!_formKey.currentState!.validate()) {
+    print(">>> Formulaire invalide");
+    return;
   }
+
+  final titre = _titreController.text.trim();
+  final description = _descriptionController.text.trim();
+  final prix = int.tryParse(_prixController.text) ?? 0;
+  final user = FirebaseAuth.instance.currentUser;
+  final images = _imageFiles ?? [];
+
+  if (titre.isEmpty || description.isEmpty || prix <= 0 || user == null) {
+    print(">>> Données manquantes ou utilisateur non connecté");
+    return;
+  }
+
+  // Upload des images (si disponibles)
+  final imageUrls = await _uploadImages(images);
+
+  // Enregistrement dans Firestore
+  await FirebaseFirestore.instance.collection('annonces').add({
+    'titre': titre,
+    'description': description,
+    'prix': prix,
+    'images': imageUrls,
+    'utilisateurId': user.uid,
+    'timestamp': DateTime.now(),
+  });
+
+  print(">>> Annonce publiée avec succès !");
+  Navigator.pop(context); // retour à l'accueil
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +161,7 @@ class _AjouterAnnonceScreenState extends State<AjouterAnnonceScreen> {
                 ),
                 SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: _publierAnnonce,
+                  onPressed: publierAnnonce,
                   child: Text("Publier"),
                 ),
               ],

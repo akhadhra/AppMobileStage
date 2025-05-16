@@ -85,7 +85,10 @@ class HomeScreen extends StatelessWidget {
                     flex: 6,
                     child: images.isNotEmpty
                         ? Image.network(images[0], fit: BoxFit.cover)
-                        : Container(color: Colors.grey),
+                        : Container(
+                            color: Colors.grey[300],
+                            child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey[600]),
+                          ),
                   ),
                   Expanded(
                     flex: 2,
@@ -93,8 +96,9 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: Text(
                         titre,
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
